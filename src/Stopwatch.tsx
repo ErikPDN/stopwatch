@@ -1,9 +1,11 @@
 import { Pause, Pencil, Play, Square } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+const START_TIME = 60;
+
 export default function Stopwatch() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState(START_TIME);
 
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time % 3600) / 60);
@@ -30,7 +32,57 @@ export default function Stopwatch() {
 
   const handleReset = () => {
     setIsRunning(false);
-    setTime(0);
+    setTime(START_TIME);
+  };
+
+  const updateTime = (
+    part: "hours" | "minutes" | "seconds",
+    leftDigit: string,
+    rightDigit: string,
+  ) => {
+    if (!/^\d$/.test(leftDigit) || !/^\d$/.test(rightDigit)) {
+      return; // Ignore if either digit is not a single digit
+    }
+
+    const h =
+      part === "hours"
+        ? Number(`${leftDigit}${rightDigit}`)
+        : Math.floor(time / 3600);
+    const m =
+      part === "minutes"
+        ? Number(`${leftDigit}${rightDigit}`)
+        : Math.floor((time % 3600) / 60);
+    const s =
+      part === "seconds" ? Number(`${leftDigit}${rightDigit}`) : time % 60;
+
+    const newTime = h * 3600 + m * 60 + s;
+    setTime(newTime);
+  };
+
+  const handleDigitChange = (
+    part: "hours" | "minutes" | "seconds",
+    side: "left" | "right",
+    rawValue: string,
+  ) => {
+    const digit = rawValue.replaceAll(/\D/g, "").slice(-1); // Keep only the last digit
+    const currentLeft =
+      part === "hours"
+        ? hoursLeft
+        : part === "minutes"
+          ? minutesLeft
+          : secondsLeft;
+    const currentRight =
+      part === "hours"
+        ? hoursRight
+        : part === "minutes"
+          ? minutesRight
+          : secondsRight;
+
+    if (side === "left") {
+      updateTime(part, digit, currentRight);
+    } else {
+      updateTime(part, currentLeft, digit);
+    }
   };
 
   useEffect(() => {
@@ -38,13 +90,20 @@ export default function Stopwatch() {
 
     intervalRef.current = setInterval(() => {
       setTime((prevTime) => {
-        if (prevTime <= 1) {
+        const newTime = prevTime - 1;
+
+        if (newTime === 10) {
+          const audio = new Audio("/countdown.mp3");
+          audio.play();
+        }
+
+        if (newTime <= 0) {
           clearInterval(intervalRef.current!);
           setIsRunning(false);
           return 0;
         }
 
-        return prevTime - 1;
+        return newTime;
       });
     }, 1000);
 
@@ -62,23 +121,27 @@ export default function Stopwatch() {
           <div className="flex gap-1">
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-5]*"
               maxLength={1}
               value={hoursLeft}
               readOnly={!isEditing}
-              onChange={(e) => {
-                const value = e.target.value;
-              }}
+              onChange={(e) =>
+                handleDigitChange("hours", "left", e.target.value)
+              }
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={1}
               value={hoursRight}
               readOnly={!isEditing}
-              onChange={(e) => {
-                const value = e.target.value;
-              }}
+              onChange={(e) =>
+                handleDigitChange("hours", "right", e.target.value)
+              }
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
@@ -87,22 +150,26 @@ export default function Stopwatch() {
           <div className="flex gap-1">
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-5]*"
               maxLength={1}
               value={minutesLeft}
               readOnly={!isEditing}
               onChange={(e) => {
-                const value = e.target.value;
+                handleDigitChange("minutes", "left", e.target.value);
               }}
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={1}
               value={minutesRight}
               readOnly={!isEditing}
               onChange={(e) => {
-                const value = e.target.value;
+                handleDigitChange("minutes", "right", e.target.value);
               }}
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
@@ -116,7 +183,7 @@ export default function Stopwatch() {
               value={secondsLeft}
               readOnly={!isEditing}
               onChange={(e) => {
-                const value = e.target.value;
+                handleDigitChange("seconds", "left", e.target.value);
               }}
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
@@ -127,7 +194,7 @@ export default function Stopwatch() {
               value={secondsRight}
               readOnly={!isEditing}
               onChange={(e) => {
-                const value = e.target.value;
+                handleDigitChange("seconds", "right", e.target.value);
               }}
               className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
@@ -136,22 +203,35 @@ export default function Stopwatch() {
         </div>
 
         <div className="flex items-center justify-center space-x-8">
-          <button className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer">
+          <button
+            onClick={() => {
+              handlePause();
+              setIsEditing((prev) => !prev);
+            }}
+            className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+          >
             <Pencil size={16} className="text-zinc-400" />
           </button>
-          <button className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer">
-            <Square size={16} className="text-red-400" />
-          </button>
-          <button
-            className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
-            onClick={() => {}}
-          >
-            {isRunning ? (
-              <Pause size={16} className="text-red-400" />
-            ) : (
-              <Play size={16} className="text-emerald-400" />
-            )}
-          </button>
+          {!isEditing && (
+            <>
+              <button
+                onClick={handleReset}
+                className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+              >
+                <Square size={16} className="text-red-400" />
+              </button>
+              <button
+                onClick={isRunning ? handlePause : handleStart}
+                className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+              >
+                {isRunning ? (
+                  <Pause size={16} className="text-red-400" />
+                ) : (
+                  <Play size={16} className="text-emerald-400" />
+                )}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
