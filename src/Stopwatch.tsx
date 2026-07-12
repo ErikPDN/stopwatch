@@ -1,10 +1,11 @@
 import { Check, Pause, Pencil, Play, Square } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-const START_TIME = 60;
+const START_TIME = 15;
 
 export default function Stopwatch() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [time, setTime] = useState(START_TIME);
 
   const hours = Math.floor(time / 3600);
@@ -13,6 +14,7 @@ export default function Stopwatch() {
 
   const [isRunning, setIsRunning] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLessThanTenSeconds, setIsLessThanTenSeconds] = useState(false);
 
   const [hoursLeft, hoursRight] = String(hours).padStart(2, "0").split("");
   const [minutesLeft, minutesRight] = String(minutes)
@@ -28,12 +30,27 @@ export default function Stopwatch() {
 
   const handlePause = () => {
     setIsRunning(false);
+    pauseCountdownSound();
+  };
+
+  const pauseCountdownSound = () => {
+    audioRef.current?.pause();
+  };
+
+  const resetCountdownSound = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setTime(START_TIME);
     setIsEditing(false);
+    setIsLessThanTenSeconds(false);
+    resetCountdownSound();
   };
 
   const updateTime = (
@@ -86,7 +103,6 @@ export default function Stopwatch() {
     }
   };
 
-  // TODO: ajustar logica para quando pausar ou resetar o timer, o som de contagem regressiva deve parar ou reiniciar
   useEffect(() => {
     if (!isRunning) return;
 
@@ -94,14 +110,16 @@ export default function Stopwatch() {
       setTime((prevTime) => {
         const newTime = prevTime - 1;
 
-        if (newTime === 10) {
-          const audio = new Audio("/countdown.mp3");
-          audio.play();
+        if (newTime <= 10) {
+          if (!audioRef.current) audioRef.current = new Audio("/countdown.mp3");
+          audioRef.current.play();
+          setIsLessThanTenSeconds(true);
         }
 
         if (newTime <= 0) {
           clearInterval(intervalRef.current!);
           setIsRunning(false);
+          setIsLessThanTenSeconds(false);
           return 0;
         }
 
@@ -116,11 +134,12 @@ export default function Stopwatch() {
     };
   }, [isRunning]);
 
-  // TODO: ajustar design para ficar vermelho quando o tempo estiver acabando
   return (
     <div className="bg-zinc-800 min-h-screen flex flex-col items-center justify-center">
       <div className="space-y-12">
-        <div className="flex items-center justify-center font-orbitron text-8xl font-medium text-emerald-500 tracking-tighter">
+        <div
+          className={`flex items-center justify-center font-orbitron text-8xl font-medium ${isLessThanTenSeconds ? "text-red-500" : "text-emerald-500"} tracking-tighter`}
+        >
           <div className="flex gap-0">
             <input
               type="text"
@@ -213,19 +232,22 @@ export default function Stopwatch() {
         </div>
 
         <div className="flex items-center justify-center space-x-8">
-          <button
-            onClick={() => {
-              handlePause();
-              setIsEditing((prev) => !prev);
-            }}
-            className="bg-transparent border border-zinc-700 rounded-full p-2 hover:bg-zinc-700 transition-colors duration-300 cursor-pointer"
-          >
-            {isEditing ? (
-              <Check size={16} className="text-emerald-400" />
-            ) : (
-              <Pencil size={16} className="text-zinc-400" />
-            )}
-          </button>
+          {!isLessThanTenSeconds && (
+            <button
+              onClick={() => {
+                handlePause();
+                setIsEditing((prev) => !prev);
+              }}
+              className="bg-transparent border border-zinc-700 rounded-full p-2 hover:bg-zinc-700 transition-colors duration-300 cursor-pointer"
+            >
+              {isEditing ? (
+                <Check size={16} className="text-emerald-400" />
+              ) : (
+                <Pencil size={16} className="text-zinc-400" />
+              )}
+            </button>
+          )}
+
           {!isEditing && (
             <>
               <button
