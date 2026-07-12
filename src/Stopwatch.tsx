@@ -1,4 +1,4 @@
-import { Pause, Pencil, Play, Square } from "lucide-react";
+import { Check, Pause, Pencil, Play, Square } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 const START_TIME = 60;
@@ -33,6 +33,7 @@ export default function Stopwatch() {
   const handleReset = () => {
     setIsRunning(false);
     setTime(START_TIME);
+    setIsEditing(false);
   };
 
   const updateTime = (
@@ -85,6 +86,7 @@ export default function Stopwatch() {
     }
   };
 
+  // TODO: ajustar logica para quando pausar ou resetar o timer, o som de contagem regressiva deve parar ou reiniciar
   useEffect(() => {
     if (!isRunning) return;
 
@@ -114,22 +116,24 @@ export default function Stopwatch() {
     };
   }, [isRunning]);
 
+  // TODO: ajustar design para ficar vermelho quando o tempo estiver acabando
   return (
     <div className="bg-zinc-800 min-h-screen flex flex-col items-center justify-center">
       <div className="space-y-12">
-        <div className="flex items-center justify-center font-orbitron text-8xl font-medium text-emerald-500">
-          <div className="flex gap-1">
+        <div className="flex items-center justify-center font-orbitron text-8xl font-medium text-emerald-500 tracking-tighter">
+          <div className="flex gap-0">
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-5]*"
+              pattern="[0-9]*"
               maxLength={1}
               value={hoursLeft}
               readOnly={!isEditing}
               onChange={(e) =>
                 handleDigitChange("hours", "left", e.target.value)
               }
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              onFocus={(e) => e.target.select()}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
             <input
@@ -142,23 +146,24 @@ export default function Stopwatch() {
               onChange={(e) =>
                 handleDigitChange("hours", "right", e.target.value)
               }
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
           </div>
           <span>:</span>
-          <div className="flex gap-1">
+          <div className="flex gap-0">
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-5]*"
+              pattern="[0-9]*"
               maxLength={1}
               value={minutesLeft}
               readOnly={!isEditing}
               onChange={(e) => {
                 handleDigitChange("minutes", "left", e.target.value);
               }}
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              onFocus={(e) => e.target.select()}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
             <input
@@ -168,35 +173,40 @@ export default function Stopwatch() {
               maxLength={1}
               value={minutesRight}
               readOnly={!isEditing}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => {
                 handleDigitChange("minutes", "right", e.target.value);
               }}
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
           </div>
           <span>:</span>
-          <div className="flex gap-1">
+          <div className="flex gap-0">
             <input
               type="text"
+              pattern="[0-9]*"
               maxLength={1}
               value={secondsLeft}
               readOnly={!isEditing}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => {
                 handleDigitChange("seconds", "left", e.target.value);
               }}
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
             <input
               type="text"
+              pattern="[0-9]*"
               maxLength={1}
               value={secondsRight}
               readOnly={!isEditing}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => {
                 handleDigitChange("seconds", "right", e.target.value);
               }}
-              className={`w-[1.2ch] rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
+              className={`w-[1ch] p-0 rounded-sm border-2 ${isEditing ? "border-emerald-500" : "border-transparent"}
                bg-zinc-800 text-center font-orbitron outline-none`}
             />
           </div>
@@ -208,21 +218,25 @@ export default function Stopwatch() {
               handlePause();
               setIsEditing((prev) => !prev);
             }}
-            className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+            className="bg-transparent border border-zinc-700 rounded-full p-2 hover:bg-zinc-700 transition-colors duration-300 cursor-pointer"
           >
-            <Pencil size={16} className="text-zinc-400" />
+            {isEditing ? (
+              <Check size={16} className="text-emerald-400" />
+            ) : (
+              <Pencil size={16} className="text-zinc-400" />
+            )}
           </button>
           {!isEditing && (
             <>
               <button
                 onClick={handleReset}
-                className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="bg-transparent border border-zinc-700 rounded-full p-2 hover:bg-zinc-700 transition-colors duration-300 cursor-pointer"
               >
                 <Square size={16} className="text-red-400" />
               </button>
               <button
                 onClick={isRunning ? handlePause : handleStart}
-                className="bg-transparent border border-zinc-400 rounded-full p-2 hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="bg-transparent border border-zinc-700 rounded-full p-2 hover:bg-zinc-700 transition-colors duration-300 cursor-pointer"
               >
                 {isRunning ? (
                   <Pause size={16} className="text-red-400" />
