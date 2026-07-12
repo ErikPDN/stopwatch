@@ -1,75 +1,55 @@
-# React + TypeScript + Vite
+# ⏱️ Stopwatch
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Um cronômetro/timer regressivo minimalista construído com React, TypeScript e Tailwind CSS. Permite editar o tempo diretamente nos dígitos, iniciar, pausar e resetar a contagem, com um alerta sonoro nos últimos 10 segundos.
 
-Currently, two official plugins are available:
+![Stopwatch preview](.github/assets/screenshot.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Funcionalidades
 
-## React Compiler
+- Contagem regressiva com exibição em horas, minutos e segundos
+- Edição do tempo dígito a dígito, direto na tela
+- Iniciar / pausar / resetar a contagem
+- Alerta visual (texto em vermelho) e sonoro nos últimos 10 segundos
+- Ao pausar, o áudio de contagem regressiva pausa e retoma do mesmo ponto ao continuar
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tecnologias
 
-## Expanding the ESLint configuration
+- [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Vite](https://vite.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Lucide React](https://lucide.dev/) (ícones)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Como rodar
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Pré-requisitos: [Node.js](https://nodejs.org/) e [pnpm](https://pnpm.io/).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+```bash
+# instalar dependências
+pnpm install
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# iniciar em modo desenvolvimento
+pnpm dev
 
+# gerar build de produção
+pnpm build
+
+# pré-visualizar o build de produção
+pnpm preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+O app fica disponível em `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Estrutura do projeto
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```
+src/
+├── App.tsx         # componente raiz
+├── Stopwatch.tsx   # lógica e UI do cronômetro
+├── main.tsx        # ponto de entrada
+└── index.css        # estilos globais / Tailwind
+public/
+├── countdown.mp3   # som da contagem regressiva
+├── favicon.svg
+└── icons.svg
 ```
